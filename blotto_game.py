@@ -5,10 +5,9 @@ to-do :
 3- fct to calculate the gain of each strategy and create a matrix of the game ✅
 
 4- fct for :
-    4.1- dominance ❌ --pas de dominance dans ce jeu
-    4.2- nash equilibrium ✅
-    4.3- pareto
-    4.4- security level
+    4.1- nash equilibrium ✅
+    4.2- pareto ✅
+    4.3- security level
 """
 import numpy as np
 from operator import itemgetter
@@ -33,8 +32,8 @@ def get_strategies(n):
 
 
 def create_map(strats, nbr):
-    map = zip([i for i in range(nbr)], strats)
-    return map
+    mapped = zip([i for i in range(nbr)], strats)
+    return mapped
 
 
 def get_profits(strats):
@@ -65,57 +64,38 @@ def get_profits(strats):
     return profit_lst
 
 
-def best_shots_and_strategies(profits, player, mapped_strats, itr):
+def nash_equilibrium(profits, mapped_strats, itr):
     best_gains = []
     best_strats = []
-    secure_strats = []
-    if player == 1:  # treating the 1st player :: working with columns
-        for column in range(itr):  # iterate over all the existing strategies, in this case get the columns each time
-            gains = profits[:, column]  # got the strategies
-            best = max(gains, key=itemgetter(0))
-            best_gains.append(best)  # keep the best gains in a list
-            nash_indexes = np.unique(np.where(gains == best)[0])  # get the index of the strat corr to the best gain
-            for ind in nash_indexes:
-                best_strats.append(mapped_strats[ind])  # most important thing : keep the best strategies in a list
-
-            # this part is for the security level
-            min_gain = min(gains, key=itemgetter(0))
-            secure_strats.append((min_gain, ()))
-        print(secure_strats)
-        secure_strategies = max(secure_strats, key=itemgetter(0))
-        print(secure_strategies)
-    if player == 2:
-        for line in range(itr):
-            best = max(profits[line], key=itemgetter(1))
-            best_gains.append(best)
-            list_of_indexes = np.unique(np.where(profits[line] == best)[0])  # get the index of the strat corr to the best gain
-            print(list_of_indexes)
-            for ind in list_of_indexes:
-                print(mapped_strats[ind])
-                best_strats.append(mapped_strats[ind])  # most important thing : keep the best strategies in a list
+    for column in range(itr):  # iterate over all the existing strategies, in this case get the columns each time
+        gains = profits[:, column]  # got the strategies
+        best = max(gains, key=itemgetter(0))
+        best_gains.append(best)  # keep the best gains in a list
+        nash_indexes = np.unique(np.where(gains == best)[0])  # get the index of the strat corr to the best gain
+        for ind in nash_indexes:
+            best_strats.append(mapped_strats[ind])  # most important thing : keep the best strategies in a list
     best_strats = list(set(best_strats))
-    return best_strats, secure_strats
+    return best_strats
 
 
-def security_level(secure_strats, mapped):
-    secure_strategies = max(secure_strats, key=itemgetter(0))
+def security_level(profits, itr, mapp):
+    # starting with the first player
+    min_gains_list = []
+    for i in range(itr):
+        min_gain = min(profits[i], key=itemgetter(0))
+        min_gains_list.append(min_gain)
+    secure_strategy = max(min_gains_list, key=itemgetter(0))
+    secure_strategy = mapp[min_gains_list.index(secure_strategy)]
+    return secure_strategy
 
-    pass
 
-
-def pareto():
-    pass
-
-
+# testing purposes
 soldiers = get_nbr_soldiers()
 strategies = list(get_strategies(soldiers))
 profits_matrix = (get_profits(strategies))
 strategies_dict = dict(create_map(strategies, len(strategies)))
-nash_equilibrium = best_shots_and_strategies(np.array(profits_matrix), 1, strategies_dict, len(strategies))
+nash_equilibrium = nash_equilibrium(np.array(profits_matrix), strategies_dict, len(strategies))
+security_strategy = security_level(profits_matrix, len(strategies), strategies_dict)
 
-# FOR TESTING PURPOSES ONLY
-for i in range(10):
-    print(profits_matrix[i])
-print("Strategies : \n", strategies)
-
-
+print(nash_equilibrium)
+print(security_strategy)
